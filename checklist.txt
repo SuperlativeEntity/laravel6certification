@@ -1,0 +1,51 @@
+Architecture
+    Request Lifecycle
+
+        application instance is created
+        service providers are registered
+        request is handed to the bootstrapped application
+
+        public/index.php
+            Composer generated autoloader definition
+            instance of the Laravel application from bootstrap/app.php
+            create an instance of the application / service container
+            request to: HTTP kernel or the console kernel
+
+        app/Http/Kernel.php
+            Illuminate\Foundation\Http\Kernel class, which defines an array of bootstrappers that will be run before the request is executed
+                configure error handling, configure logging, detect the application environment
+            Middleware
+            Request/Response
+
+    Service Container Binding and Resolution
+
+        $this->app->bind('HelpSpot\API', function ($app) {
+            return new \HelpSpot\API($app->make('HttpClient'));
+        });
+
+        $this->app->singleton('HelpSpot\API', function ($app) {
+            return new \HelpSpot\API($app->make('HttpClient'));
+        });
+
+    Service Providers
+        Service providers are the central place of all Laravel application bootstrapping
+        One of the most important Kernel bootstrapping actions is loading the service providers for your application.
+        All of the service providers for the application are configured in the config/app.php
+        register -> boot
+        e.g. database, queue, validation, and routing components
+        Request will be handed off to the router for dispatching
+
+    Facades
+        Illuminate\Support\Facades namespace
+        Laravel facades serve as "static proxies" to underlying classes in the service container
+        A facade is a class that provides access to an object from the container
+
+    HTTP Verbs
+
+    Routing
+        Redirects
+        Route Parameters
+        Named Routes
+        Route Groups
+        Route Model Binding
+        Rate Limiting

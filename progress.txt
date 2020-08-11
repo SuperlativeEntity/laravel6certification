@@ -1,0 +1,321 @@
+install
+    composer global require laravel/installer
+    laravel new blog
+    composer create-project --prefer-dist laravel/laravel blog "6.*"
+    php artisan serve
+    php artisan key:generate
+    php artisan storage:link
+    deploy
+        composer install --optimize-autoloader --no-dev
+        php artisan config:cache
+        php artisan route:cache
+
+make
+    php artisan list make
+
+env
+    APP_NAME="My Application"
+    'debug' => env('APP_DEBUG', false),
+    $environment = App::environment();
+
+    if (App::environment('local')) {
+        // The environment is local
+    }
+
+    if (App::environment(['local', 'staging'])) {
+        // The environment is either local OR staging...
+    }
+
+config/app.php
+    debug_blacklist
+
+config
+    $value = config('app.timezone');
+    config(['app.timezone' => 'America/Chicago']);
+    php artisan config:cache
+
+maintenance mode
+    MaintenanceModeException will be thrown with a status code of 503
+    php artisan down
+    php artisan down --message="Upgrading Database" --retry=60
+    php artisan down --allow=127.0.0.1 --allow=192.168.0.0/16
+    php artisan up
+    While your application is in maintenance mode, no queued jobs will be handled
+
+bindings
+    $this->app->bind('HelpSpot\API', function ($app) {
+        return new \HelpSpot\API($app->make('HttpClient'));
+    });
+
+    $this->app->singleton('HelpSpot\API', function ($app) {
+        return new \HelpSpot\API($app->make('HttpClient'));
+    });
+
+    $api = new \HelpSpot\API(new HttpClient);
+    $this->app->instance('HelpSpot\API', $api);
+
+    $this->app->when('App\Http\Controllers\UserController')
+              ->needs('$variableName')
+              ->give($value);
+
+    $this->app->bind(
+        'App\Contracts\EventPusher',
+        'App\Services\RedisEventPusher'
+    );
+
+    contextual binding
+        use App\Http\Controllers\PhotoController;
+        use App\Http\Controllers\UploadController;
+        use App\Http\Controllers\VideoController;
+        use Illuminate\Contracts\Filesystem\Filesystem;
+        use Illuminate\Support\Facades\Storage;
+
+
+        $this->app->when(PhotoController::class)
+                  ->needs(Filesystem::class)
+                  ->give(function () {
+                      return Storage::disk('local');
+                  });
+
+        $this->app->when([VideoController::class, UploadController::class])
+                  ->needs(Filesystem::class)
+                  ->give(function () {
+                      return Storage::disk('s3');
+                  });
+
+    tagging
+
+        $this->app->bind('SpeedReport', function () {
+            //
+        });
+
+        $this->app->bind('MemoryReport', function () {
+            //
+        });
+
+        $this->app->tag(['SpeedReport', 'MemoryReport'], 'reports');
+
+        $this->app->bind('ReportAggregator', function ($app) {
+            return new ReportAggregator($app->tagged('reports'));
+        });
+
+    extending
+        $this->app->extend(Service::class, function ($service, $app) {
+            return new DecoratedService($service);
+        });
+
+    resolving
+        $api = $this->app->make('HelpSpot\API');
+        $api = resolve('HelpSpot\API');
+        $api = $this->app->makeWith('HelpSpot\API', ['id' => 1]);
+
+    container events
+        $this->app->resolving(function ($object, $app) {
+            // Called when container resolves object of any type...
+        });
+
+        $this->app->resolving(\HelpSpot\API::class, function ($api, $app) {
+            // Called when container resolves objects of type "HelpSpot\API"...
+        });
+
+service providers
+    php artisan make:provider RiakServiceProvider
+
+routes
+    Route::get($uri, $callback);
+    Route::post($uri, $callback);
+    Route::put($uri, $callback);
+    Route::patch($uri, $callback);
+    Route::delete($uri, $callback);
+    Route::options($uri, $callback);
+
+    Closure
+        Route::get('foo', function () {
+            return 'Hello World';
+        });
+
+    Route::get('/user', 'UserController@index');
+
+    Route::match(['get', 'post'], '/', function () {
+        //
+    });
+
+    Route::any('/', function () {
+        //
+    });
+
+    Redirects
+        Route::redirect('/here', '/there'); // default 302 http code
+        Route::redirect('/here', '/there', 301); // permanent redirect
+        Route::permanentRedirect('/here', '/there');
+
+    View
+        Route::view('/welcome', 'welcome');
+        Route::view('/welcome', 'welcome', ['name' => 'Taylor']);
+
+    Required Parameters
+        Route::get('user/{id}', function ($id) {
+            return 'User '.$id;
+        });
+
+        Route::get('posts/{post}/comments/{comment}', function ($postId, $commentId) {
+            //
+        });
+
+    Optional Parameters
+        Route::get('user/{name?}', function ($name = null) {
+            return $name;
+        });
+
+        Route::get('user/{name?}', function ($name = 'John') {
+            return $name;
+        });
+
+    Regex
+        Route::get('user/{name}', function ($name) {
+            //
+        })->where('name', '[A-Za-z]+');
+
+        Route::get('user/{id}', function ($id) {
+            //
+        })->where('id', '[0-9]+');
+
+        Route::get('user/{id}/{name}', function ($id, $name) {
+            //
+        })->where(['id' => '[0-9]+', 'name' => '[a-z]+']);
+
+    Global (RouteServiceProvider)
+        public function boot()
+        {
+            Route::pattern('id', '[0-9]+');
+
+            parent::boot();
+        }
+
+        // applied to
+        Route::get('user/{id}', function ($id) {
+            // Only executed if {id} is numeric...
+        });
+
+    Encoded Forward Slashes (Encoded forward slashes are only supported within the last route segment.)
+        Route::get('search/{search}', function ($search) {
+            return $search;
+        })->where('search', '.*');
+
+    Named Routes
+
+        Route::get('user/profile', function () {
+            //
+        })->name('profile');
+
+        Route::get('user/profile', 'UserProfileController@show')->name('profile');
+
+        // Generating URLs...
+        $url = route('profile');
+
+        // Generating Redirects...
+        return redirect()->route('profile');
+
+        Parameters
+            Route::get('user/{id}/profile', function ($id) {
+                //
+            })->name('profile');
+
+            $url = route('profile', ['id' => 1]);
+
+            Route::get('user/{id}/profile', function ($id) {
+                //
+            })->name('profile');
+
+            $url = route('profile', ['id' => 1, 'photos' => 'yes']);
+
+            // /user/1/profile?photos=yes
+
+        Inspecting
+            public function handle($request, Closure $next)
+            {
+                if ($request->route()->named('profile')) {
+                    //
+                }
+
+                return $next($request);
+            }
+
+        Sub-Domains
+            Route::domain('{account}.myapp.com')->group(function () {
+                Route::get('user/{id}', function ($account, $id) {
+                    //
+                });
+            });
+
+        Prefix
+            Route::prefix('admin')->group(function () {
+                Route::get('users', function () {
+                    // Matches The "/admin/users" URL
+                });
+            });
+
+        Route Name Prefixes
+            Route::name('admin.')->group(function () {
+                Route::get('users', function () {
+                    // Route assigned name "admin.users"...
+                })->name('users');
+            });
+
+        Route Model Binding
+            Route::get('api/users/{user}', function (App\User $user) {
+                return $user->email;
+            });
+
+            public function getRouteKeyName()
+            {
+                return 'slug';
+            }
+
+        Explicit Binding
+            public function boot()
+            {
+                parent::boot();
+
+                Route::model('user', App\User::class);
+            }
+
+            Route::get('profile/{user}', function (App\User $user) {
+                //
+            });
+
+        Rate Limiting
+            Route::middleware('auth:api', 'throttle:60,1')->group(function () {
+                Route::get('/user', function () {
+                    //
+                });
+            });
+
+            Route::middleware('throttle:10|60,1')->group(function () {
+                //
+            });
+
+            Route::middleware('auth:api')->group(function () {
+                Route::middleware('throttle:60,1,default')->group(function () {
+                    Route::get('/servers', function () {
+                        //
+                    });
+                });
+
+                Route::middleware('throttle:60,1,deletes')->group(function () {
+                    Route::delete('/servers/{id}', function () {
+                        //
+                    });
+                });
+            });
+
+        Form Method Spoofing
+            <form action="/foo/bar" method="POST">
+                @method('PUT')
+                @csrf
+            </form>
+
+        Current Route
+            $route = Route::current();
+            $name = Route::currentRouteName();
+            $action = Route::currentRouteAction();    
