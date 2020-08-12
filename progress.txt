@@ -319,3 +319,186 @@ routes
             $route = Route::current();
             $name = Route::currentRouteName();
             $action = Route::currentRouteAction();
+
+CSRF
+    <form method="POST" action="/profile">
+        @csrf
+        ...
+    </form>
+
+    <?php
+
+    namespace App\Http\Middleware;
+
+    use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
+
+    class VerifyCsrfToken extends Middleware
+    {
+        /**
+         * The URIs that should be excluded from CSRF verification.
+         *
+         * @var array
+         */
+        protected $except = [
+            'stripe/*',
+            'http://example.com/foo/bar',
+            'http://example.com/foo/*',
+        ];
+    }
+
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    $.ajaxSetup({
+        headers: {
+            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+        }
+    });
+
+Controller
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use App\Http\Controllers\Controller;
+    use App\User;
+
+    class UserController extends Controller
+    {
+        /**
+         * Show the profile for the given user.
+         *
+         * @param  int  $id
+         * @return View
+         */
+        public function show($id)
+        {
+            return view('user.profile', ['user' => User::findOrFail($id)]);
+        }
+    }
+
+    Route::get('user/{id}', 'UserController@show');
+
+    // single action
+
+    php artisan make:controller ShowProfile --invokable
+
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use App\Http\Controllers\Controller;
+    use App\User;
+
+    class ShowProfile extends Controller
+    {
+        /**
+         * Show the profile for the given user.
+         *
+         * @param  int  $id
+         * @return View
+         */
+        public function __invoke($id)
+        {
+            return view('user.profile', ['user' => User::findOrFail($id)]);
+        }
+    }
+
+    Route::get('user/{id}', 'ShowProfile'); // no method specified
+
+    // middleware
+        Route::get('profile', 'UserController@show')->middleware('auth');
+
+        class UserController extends Controller
+        {
+            /**
+             * Instantiate a new controller instance.
+             *
+             * @return void
+             */
+            public function __construct()
+            {
+                $this->middleware('auth');
+
+                $this->middleware('log')->only('index');
+
+                $this->middleware('subscribed')->except('store');
+            }
+        }
+
+        // closure
+            $this->middleware(function ($request, $next) {
+                // ...
+
+                return $next($request);
+            })
+
+    // resource
+        php artisan make:controller PhotoController --resource
+        php artisan make:controller PostController --resource
+        php artisan make:controller PhotoController --resource --model=Photo //specify model
+        php artisan make:controller API/PostController --api // generate api resource
+
+        Route::resource('photos', 'PhotoController');
+        Route::apiResource('photos', 'PhotoController'); // excludes html templates (views)
+
+        // web resource
+            Route::resources([
+                'photos' => 'PhotoController',
+                'posts' => 'PostController'
+            ]);
+
+        // api resource
+            Route::apiResources([
+                'photos' => 'PhotoController',
+                'posts' => 'PostController'
+            ]);
+
+        // spoofing
+            <form action="/foo/bar" method="POST">
+                @method('PUT')
+            </form>
+
+        // partial
+
+            Route::resource('photos', 'PhotoController')->only([
+                'index', 'show'
+            ]);
+
+            Route::resource('photos', 'PhotoController')->except([
+                'create', 'store', 'update', 'destroy'
+            ]);
+
+        // nested
+            Route::resource('photos.comments', 'PhotoCommentController'); // /photos/{photo}/comments/{comment}
+
+            Route::resource('photos.comments', 'CommentController')->shallow();
+
+        // override route name
+            Route::resource('photos', 'PhotoController')->names([
+                'create' => 'photos.build'
+            ]);
+
+        // override route parameter name
+            Route::resource('users', 'AdminUserController')->parameters([
+                'users' => 'admin_user' // /users/{admin_user}
+            ]);
+
+        // localise : AppServiceProvider
+            use Illuminate\Support\Facades\Route;
+
+            /**
+             * Bootstrap any application services.
+             *
+             * @return void
+             */
+            public function boot()
+            {
+                Route::resourceVerbs([
+                    'create' => 'crear', // /fotos/crear
+                    'edit' => 'editar', // /fotos/{foto}/editar
+                ]);
+            }
+
+        // extra methods to resource
+            Route::get('photos/popular', 'PhotoController@method'); // added before
+            Route::resource('photos', 'PhotoController');
