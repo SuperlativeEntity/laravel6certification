@@ -318,4 +318,4 @@ routes
         Current Route
             $route = Route::current();
             $name = Route::currentRouteName();
-            $action = Route::currentRouteAction();    
+            $action = Route::currentRouteAction();
