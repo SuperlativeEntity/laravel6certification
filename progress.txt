@@ -502,3 +502,394 @@ Controller
         // extra methods to resource
             Route::get('photos/popular', 'PhotoController@method'); // added before
             Route::resource('photos', 'PhotoController');
+
+Requests
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use Illuminate\Http\Request;
+
+    class UserController extends Controller
+    {
+        /**
+         * Store a new user.
+         *
+         * @param  Request  $request
+         * @return Response
+         */
+        public function store(Request $request)
+        {
+            $name = $request->input('name');
+
+            //
+        }
+    }
+
+    Route::put('user/{id}', 'UserController@update');
+    You may still type-hint the Illuminate\Http\Request and access your route parameter id by defining your controller method as follows:
+
+    <?php
+
+    namespace App\Http\Controllers;
+
+    use Illuminate\Http\Request;
+
+    class UserController extends Controller
+    {
+        /**
+         * Update the specified user.
+         *
+         * @param  Request  $request
+         * @param  string  $id
+         * @return Response
+         */
+        public function update(Request $request, $id)
+        {
+            //
+        }
+    }
+
+    // closure
+        use Illuminate\Http\Request;
+
+        Route::get('/', function (Request $request) {
+            //
+        });
+
+
+    $uri = $request->path();
+
+    if ($request->is('admin/*')) {
+        //
+    }
+
+    // Without Query String...
+    $url = $request->url();
+
+    // With Query String...
+    $url = $request->fullUrl();
+
+    $method = $request->method();
+
+    if ($request->isMethod('post')) {
+        //
+    }
+
+    // psr 7
+        composer require symfony/psr-http-message-bridge
+        composer require nyholm/psr7
+
+        use Psr\Http\Message\ServerRequestInterface;
+
+        Route::get('/', function (ServerRequestInterface $request) {
+            //
+        });
+
+    // input
+        $input = $request->all(); or $input = $request->input();
+        $name = $request->input('name');
+        $name = $request->input('name', 'Sally');
+        $name = $request->name;
+        $name = $request->input('user.name'); // json
+        $archived = $request->boolean('archived');
+
+        // arrays
+            $name = $request->input('products.0.name');
+            $names = $request->input('products.*.name');
+
+    // query string
+        $name = $request->query('name');
+        $name = $request->query('name', 'Helen');
+        $query = $request->query();
+
+    // portion
+        $input = $request->only(['username', 'password']);
+        $input = $request->only('username', 'password');
+        $input = $request->except(['credit_card']);
+        $input = $request->except('credit_card');
+
+    // present values
+        if ($request->has('name')) {
+            //
+        }
+
+        if ($request->has(['name', 'email'])) {
+            //
+        }
+
+        if ($request->hasAny(['name', 'email'])) {
+            //
+        }
+
+        if ($request->filled('name')) {
+            // present and not empty
+        }
+
+        if ($request->missing('name')) {
+            // not present at all
+        }
+
+    // flashing
+        $request->flash();
+        $request->flashOnly(['username', 'email']);
+        $request->flashExcept('password');
+
+        // redirect
+            return redirect('form')->withInput();
+
+            return redirect('form')->withInput(
+                $request->except('password')
+            );
+
+        // old input
+            $username = $request->old('username');
+            <input type="text" name="username" value="{{ old('username') }}">
+
+        // cookies
+            $value = $request->cookie('name');
+
+            or
+
+            use Illuminate\Support\Facades\Cookie;
+            $value = Cookie::get('name');
+
+            // attach to response
+                return response('Hello World')->cookie(
+                    'name', 'value', $minutes
+                );
+
+                // other parameters
+                return response('Hello World')->cookie(
+                    'name', 'value', $minutes, $path, $domain, $secure, $httpOnly
+                );
+
+                // queue (attached to the outgoing response before it is sent to the browser)
+                    Cookie::queue(Cookie::make('name', 'value', $minutes));
+                    Cookie::queue('name', 'value', $minutes);
+
+                // helper
+                    $cookie = cookie('name', 'value', $minutes);
+                    return response('Hello World')->cookie($cookie); // cookie will not be sent back to the client unless it is attached to a response instance
+
+        // uploaded files
+            storage/app/public => user media
+            php artisan storage:link
+
+            storage\app => app generated files
+
+            $file = $request->file('photo');
+            $file = $request->photo;
+
+            if ($request->hasFile('photo')) {
+                //
+            }
+
+            if ($request->file('photo')->isValid()) {
+                //
+            }
+
+            $path = $request->photo->path();
+            $extension = $request->photo->extension();
+
+        // storing files
+            $path = $request->photo->store('images');
+            $path = $request->photo->store('images', 's3');
+            $path = $request->photo->storeAs('images', 'filename.jpg');
+            $path = $request->photo->storeAs('images', 'filename.jpg', 's3');
+
+// responses
+    Route::get('/', function () {
+        return 'Hello World';
+    });
+
+    Route::get('/', function () {
+        return [1, 2, 3]; // auto json
+    });
+
+    eloquent collection auto json as well
+
+    Route::get('home', function () {
+        return response('Hello World', 200)
+                      ->header('Content-Type', 'text/plain');
+    });
+
+    // chainable
+    return response($content)
+                ->header('Content-Type', $type)
+                ->header('X-Header-One', 'Header Value')
+                ->header('X-Header-Two', 'Header Value');
+
+    or
+
+    return response($content)
+                ->withHeaders([
+                    'Content-Type' => $type,
+                    'X-Header-One' => 'Header Value',
+                    'X-Header-Two' => 'Header Value',
+                ]);
+
+    Route::middleware('cache.headers:public;max_age=2628000;etag')->group(function () {
+        Route::get('privacy', function () {
+            // ...
+        });
+
+        Route::get('terms', function () {
+            // ...
+        });
+    });
+
+    // attaching cookies to responses
+        return response($content)
+                        ->header('Content-Type', $type)
+                        ->cookie('name', 'value', $minutes); // ->cookie($name, $value, $minutes, $path, $domain, $secure, $httpOnly)
+
+    // queue cookies
+        Cookie::queue(Cookie::make('name', 'value', $minutes));
+        Cookie::queue('name', 'value', $minutes);
+
+    // redirects
+        Route::get('dashboard', function () {
+            return redirect('home/dashboard');
+        });
+
+        Route::post('user/profile', function () {
+            // Validate the request...
+
+            return back()->withInput();
+        });
+
+        // named routes
+            return redirect()->route('login');
+            return redirect()->route('profile', ['id' => 1]);
+            return redirect()->route('profile', [$user]); // model
+
+           public function getRouteKey()
+           {
+               return $this->slug;
+           }
+
+        // controller actions
+            return redirect()->action('HomeController@index');
+            return redirect()->action('UserController@profile', ['id' => 1]);
+
+        // external domain
+            return redirect()->away('https://www.google.com');
+
+        // flashed data
+            Route::post('user/profile', function () {
+                // Update the user's profile...
+
+                return redirect('dashboard')->with('status', 'Profile updated!');
+            });
+
+            @if (session('status'))
+                <div class="alert alert-success">
+                    {{ session('status') }}
+                </div>
+            @endif
+
+        // view
+            return response()
+                        ->view('hello', $data, 200)
+                        ->header('Content-Type', $type);
+
+        // json
+            return response()->json([
+                'name' => 'Abigail',
+                'state' => 'CA'
+            ]);
+
+            return response()
+                        ->json(['name' => 'Abigail', 'state' => 'CA'])
+                        ->withCallback($request->input('callback'));
+
+        // file downloads (Symfony HttpFoundation, which manages file downloads, requires the file being downloaded to have an ASCII file name.)
+            return response()->download($pathToFile);
+            return response()->download($pathToFile, $name, $headers);
+            return response()->download($pathToFile)->deleteFileAfterSend();
+
+            // no download to disk
+                return response()->streamDownload(function () {
+                    echo GitHub::api('repo')
+                                ->contents()
+                                ->readme('laravel', 'laravel')['contents'];
+                }, 'laravel-readme.md');
+
+            // display in browser
+                return response()->file($pathToFile);
+                return response()->file($pathToFile, $headers);
+
+        // response macros
+
+        <?php
+
+        namespace App\Providers;
+
+        use Illuminate\Support\Facades\Response;
+        use Illuminate\Support\ServiceProvider;
+
+        class ResponseMacroServiceProvider extends ServiceProvider
+        {
+            /**
+             * Register the application's response macros.
+             *
+             * @return void
+             */
+            public function boot()
+            {
+                Response::macro('caps', function ($value) {
+                    return Response::make(strtoupper($value));
+                });
+            }
+        }
+
+        return response()->caps('foo');
+
+// views
+    Route::get('/', function () {
+        return view('greeting', ['name' => 'James']);
+    });
+
+    // sub-views (View directory names should not contain the . character.)
+        return view('admin.profile', $data);
+
+    // exists
+
+        use Illuminate\Support\Facades\View;
+
+        if (View::exists('emails.customer')) {
+            //
+        }
+
+    // first available
+        return view()->first(['custom.admin', 'admin'], $data);
+
+        or
+
+        use Illuminate\Support\Facades\View;
+
+        return View::first(['custom.admin', 'admin'], $data);
+
+    // passing data
+        return view('greetings', ['name' => 'Victoria']);
+
+        or
+
+        return view('greeting')->with('name', 'Victoria');
+
+    // share with all views
+        View::share('key', 'value'); // AppServiceProvider -> boot
+
+    // view composers
+        View::composer(
+            ['profile', 'dashboard'],
+            'App\Http\View\Composers\MyViewComposer'
+        );
+
+        View::composer('*', function ($view) {
+            //
+        });
+
+    // view creator
+        View::creator('profile', 'App\Http\View\Creators\ProfileCreator'); // they are executed immediately after the view is instantiated
